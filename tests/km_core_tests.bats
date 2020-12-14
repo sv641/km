@@ -839,9 +839,6 @@ fi
       if [ $status == 0 ] ; then break; fi
    done
    assert_success
-   assert_line --partial "thread_func(): end of DISABLE_CANCEL_TEST"
-   refute_line --partial "PTHREAD_CANCEL_ASYNCHRONOUS"
-   assert_line --partial "PTHREAD_CANCEL_DEFERRED"
 }
 
 # C++ tests
