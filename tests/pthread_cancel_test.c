@@ -127,6 +127,7 @@ static long pthread_cancel_child(test_type_t arg)
        * pthread_cond_wait is cancellation point
        */
       pthread_mutex_lock(&ptc_test.send_cancel_mutex);
+      ptc_test.test_result = true;
       pthread_cond_wait(&ptc_test.send_cancel_cv, &ptc_test.send_cancel_mutex);
       pthread_mutex_unlock(&ptc_test.send_cancel_mutex);
 
@@ -135,7 +136,7 @@ static long pthread_cancel_child(test_type_t arg)
        * no log messages
        */
 
-      ptc_test.test_result = true;
+      //ptc_test.test_result = true;
 
       /*
        * cancellation point, should not return from this call
