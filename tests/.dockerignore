@@ -5,3 +5,4 @@
 Dockerfile
 *.dockerfile
 bats-job*
+km-bats-[0-9]*.*

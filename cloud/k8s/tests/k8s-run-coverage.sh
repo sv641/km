@@ -103,13 +103,16 @@ function main {
 
     # The output .gcda files are inside the container after tests are run, but
     # to run coverage analysis on these files, we need access to the km source
-    # code, which are not provided inside testenv. Therefore, we need to cp
+    # code, which is not provided inside testenv. Therefore, we need to cp
     # coverage file out of pod onto the host.
+    mkdir -p ${HOST_COVERAGE_DEST}
     kubectl cp ${pod_name}:/home/appuser/km/build/km/coverage/. ${HOST_COVERAGE_DEST}/.
     local exit_code=$?
     if [[ $exit_code != 0 ]]; then
         echo "Failed to cp coverage output: ${HOST_COVERAGE_DEST}"
     fi
+    echo "Coverage files on host:"
+    ls -lh ${HOST_COVERAGE_DEST}/.
     cleanup_and_exit $pod_name $exit_code
 }
 

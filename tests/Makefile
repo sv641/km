@@ -31,7 +31,7 @@ TESTENV_EXTRA_FILES := ${COVERAGE_KM_BIN} ${KM_LDSO}
 # copying both of them into the TESTENV_PATH. testenv.dockerfile will take care
 # of copying the km into the right place.
 override define testenv_prep =
-	${MAKE} -j -C ${TOP}/km coverage
+	${MAKE} MAKEFLAGS="$(MAKEFLAGS)" -j -C ${TOP}/km all coverage
 	cp ${KM_BIN} ${TESTENV_PATH}
 	cp ${KM_LDSO} ${TESTENV_PATH}
 	cp ${COVERAGE_KM_BIN} ${TESTENV_PATH}/km.coverage
@@ -49,7 +49,8 @@ ifneq ($(TEST_JOBS),.)
 endif
 
 # Base command to run BATS, and derivatives - how to run outside of container, in container, etc..
-BATS_CMD := run_bats_tests.sh --match="${MATCH}" --usevirt="${USEVIRT}" ${IGNORE_FAILURE} ${__BATS_JOBS}
+##### !!!!!!!!!!!!!!!!!! TODO - revert. this is for speed
+BATS_CMD := run_bats_tests.sh --match="args" --usevirt="${USEVIRT}" ${IGNORE_FAILURE} ${__BATS_JOBS} --test-type=static
 # this is how we run in outside of container
 TEST_CMD := time ./${BATS_CMD} --km=${KM_BIN} --pretty
 COVERAGE_TEST_CMD := time ./${BATS_CMD} --km=${COVERAGE_KM_BIN} --pretty
@@ -166,15 +167,13 @@ ifneq ($(no_deps),match)
 -include ${DEPS}
 endif
 
-COVERAGE_SCRIPT := ${CURRENT_DIR}/scripts/coverage.sh
-COVERAGE_REPORT_TITLE := ${IMAGE_VERSION}
-test-coverage:
+COVERAGE_REPORT_VERSION ?= ${IMAGE_VERSION}
+test-coverage: ## runs tests using "coverage" KM. Use 'make coverage' to build it
 	${COVERAGE_TEST_CMD}
-	${COVERAGE_SCRIPT} ${TOP}/km ${COVERAGE_KM_BLDDIR} ${COVERAGE_KM_BLDDIR} ${COVERAGE_REPORT_VERSION}
+	${CURRENT_DIR}/scripts/coverage.sh ${TOP}/km ${COVERAGE_KM_BLDDIR} ${COVERAGE_KM_BLDDIR} ${COVERAGE_REPORT_VERSION}
 
 # Since coverage is only relevent to km, put it here instead of image.mk
-DOCKER_COVERAGE_SCRIPT := ${DOCKER_KM_TOP}/tests/scripts/coverage.sh
-DOCKER_COVERAGE_CMD := ${DOCKER_COVERAGE_SCRIPT} ${DOCKER_KM_TOP}/km ${DOCKER_COVERAGE_KM_BLDDIR} ${DOCKER_COVERAGE_KM_BLDDIR}
+DOCKER_COVERAGE_CMD := ${DOCKER_KM_TOP}/tests/scripts/coverage.sh ${DOCKER_KM_TOP}/km ${DOCKER_COVERAGE_KM_BLDDIR} ${DOCKER_COVERAGE_KM_BLDDIR}
 DOCKER_COVERAGE_NAME := kontain-coverage-test
 # Because coverage runs the test inside and generates .gcda files which needs
 # to be placed on the host to run analysis, we have to keep the container
@@ -183,7 +182,14 @@ DOCKER_COVERAGE_NAME := kontain-coverage-test
 # will be owned by the host user. We can't map the current user into container,
 # because all the testfiles are owned by appuser. So the only solution is to let
 # the files be generated inside the container, and docker cp out onto the host.
-coverage-withdocker:
+test-coverage-withdocker coverage-withdocker:
+	${DOCKER_RUN_TEST} ${TEST_IMG_TAGGED} sh -c \
+		'${CONTAINER_COVERAGE_TEST_CMD} \
+		&& ${DOCKER_COVERAGE_CMD}'
+	@echo TODO: copy the results from docker by mounting an output dir
+
+
+old-crap:
 	-docker rm --force ${DOCKER_COVERAGE_NAME}
 	docker create --device=${HYPERVISOR_DEVICE} --name ${DOCKER_COVERAGE_NAME} ${TEST_IMG_TAGGED} tail -f /dev/null
 	docker start ${DOCKER_COVERAGE_NAME}
@@ -195,9 +201,27 @@ coverage-withdocker:
 K8S_TEST_COVERAGE_SCRIPT := ${TOP}/cloud/k8s/tests/k8s-run-coverage.sh
 K8S_TEST_COVERAGE_IMAGE := ${TEST_K8S_IMAGE}
 K8S_TEST_COVERAGE_NAME := test-coverage-${PROCESSED_IMAGE_VERION}
-coverage-withk8s:
+test-coverage-withk8s coverage-withk8s:
 	${K8S_TEST_COVERAGE_SCRIPT} ${K8S_TEST_COVERAGE_IMAGE} ${K8S_TEST_COVERAGE_NAME} "${CONTAINER_COVERAGE_TEST_CMD}" ${COVERAGE_KM_BLDDIR}
-	${DOCKER_RUN_BUILD} -v ${TOP}:${DOCKER_KM_TOP}:Z -w ${DOCKER_KM_TOP} $(BUILDENV_IMG) ${DOCKER_COVERAGE_CMD}
+	${DOCKER_RUN_BUILD} --env=TRACE=yes -v ${TOP}:${DOCKER_KM_TOP}:Z -w ${DOCKER_KM_TOP} $(BUILDENV_IMG) ${DOCKER_COVERAGE_CMD}
+
+# /home/runner/work/km/km/cloud/k8s/tests/
+# k8s-run-coverage.sh kontainkubecr.azurecr.io/test-km-fedora:ci-mc-5 test-coverage-ci-mc-5
+# "/home/appuser/km/tests/run_bats_tests.sh --match="" --usevirt=""  --jobs= --test-type=static --km=/opt/kontain/coverage/bin/km"
+# /home/runner/work/km/km/build/km/coverage
+# docker run --rm -u 1001:121 -v /home/runner/work/km/km:/home/appuser/km:Z -w /home/appuser/km
+# kontain/buildenv-km-fedora
+# /home/appuser/km/tests/scripts/coverage.sh
+# INPUT_SRC_DIR /home/appuser/km/km
+# INPUT_COVERAGE_SEARCH_DIR /home/appuser/km/build/km/coverage
+# OUTPUT_DIR /home/appuser/km/build/km/coverage
+# readonly PROGNAME=$(basename $0)
+# readonly INPUT_SRC_DIR=$1
+# readonly INPUT_COVERAGE_SEARCH_DIR=$2
+# readonly OUTPUT_DIR=$3
+# readonly REPORT_VERSION=$4
+
+
 
 UPLOAD_COVERAGE_SCRIPT := ${TOP}/cloud/k8s/tests/upload-coverage.sh
 upload-coverage: .check_vars

@@ -1,0 +1,80 @@
+name: KM CI - Coverage testing
+on:
+  push:
+    branches: [ msterin/coverage-action ]
+  workflow_dispatch:
+
+env:
+  BUILDENV_IMAGE_VERSION: latest # use this for all buildenv containers
+  IMAGE_VERSION: ci-mc-${{ github.run_number }} # use this for all other containers
+  SP_APPID: ${{ secrets.SP_APPID }}
+  SP_PASSWORD: ${{ secrets.SP_PASSWORD }}
+  SP_TENANT: ${{ secrets.SP_TENANT }}
+  TRACE: true
+
+jobs:
+  km-build:
+    name: Build KM, push test image
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Print build environment info
+        run: |
+          echo ====Environment info===
+          echo "SHA: $(git rev-parse HEAD)"
+          echo "=== Last 10 commits:"
+          git log -n 10 --graph --pretty=format:'%h% %d %s %cr %ce'
+          echo "=== VM/OS:"
+          cat /proc/version
+          cat /etc/os-release
+          echo "=== Docker version:"
+          docker version
+          echo ==== Environment Variables
+          env
+          echo ==== CPU Info
+          lscpu
+
+      - run: make -C cloud/azure login-cli
+
+      - name: Prepare KM build env
+        run: make -C tests pull-buildenv-image .buildenv-local-lib
+
+      - name: Build KM and tests using buildenv image
+        run:  make -j withdocker
+
+      - name: Build KM for coverage
+        run: make -C km -j withdocker TARGET=coverage
+
+      - name: Build and push KM testenv image
+        run: make -C tests testenv-image push-testenv-image
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: km
+          path: |
+            /opt/kontain/bin/km
+            /opt/kontain/runtime/libc.so
+          retention-days: 7
+
+  km-test-all:
+    name: Test KM with coverage
+    runs-on: ubuntu-20.04
+    needs: [km-build]
+    env:
+      K8S_TEST_ERR_NO_CLEANUP: true # true means "on error, keep pods around". (assumes cluster is not cleaned up)
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - run: make -C cloud/azure login-cli
+
+      - name: KM tests with coverage, on K8s
+        # pull buildenv before testing, coverage analysis will need it
+        run : make -C tests pull-buildenv-image coverage-withk8s
+        timeout-minutes: 15
+
+      - name: Upload coverage
+        run: make -C tests upload-coverage GITHUB_TOKEN=${{ github.token }} # TODO - is it a correct token ?

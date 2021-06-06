@@ -17,18 +17,12 @@ readonly PROGNAME=$(basename $0)
 readonly INPUT_SRC_DIR=$1
 readonly INPUT_COVERAGE_SEARCH_DIR=$2
 readonly OUTPUT_DIR=$3
-readonly REPORT_VERSION=$4
-if [[ -z ${REPORT_VERSION} ]]; then
-    readonly REPORT_TITLE="Kontain Monitor Code Coverage Report"
-else
-    readonly REPORT_TITLE="Kontain Monitor Code Coverage Report - ${REPORT_VERSION}"
-fi
+readonly REPORT_TITLE="Kontain Monitor Code Coverage Report - ${4:-default}"
 
-readonly COVERAGE_CMD_NAME=gcovr
 readonly COVERAGE_REPORT=${OUTPUT_DIR}/report.html
 readonly PARALLEL=$(nproc --all)
 if [[ -z ${MATCH} || ${MATCH} == '.*' ]]; then
-    readonly COVERAGE_THRESHOLDS="--fail-under-branch 40  --fail-under-line 55"
+    readonly COVERAGE_THRESHOLDS="--fail-under-branch 4  --fail-under-line 5"
 fi
 
 function usage() {
@@ -42,20 +36,32 @@ EOF
 }
 
 function check_params() {
-    if [[ -z ${INPUT_SRC_DIR} ]]; then usage; fi
-    if [[ -z ${INPUT_COVERAGE_SEARCH_DIR} ]]; then usage; fi
-    if [[ -z ${OUTPUT_DIR} ]]; then usage; fi
+   if [ -z "${INPUT_SRC_DIR}" -o -z "${INPUT_COVERAGE_SEARCH_DIR}" -o -z "${OUTPUT_DIR}" ]; then
+     usage
+   fi
 }
 
 function main() {
     check_params
-
-    if [[ ! -x $(command -v ${COVERAGE_CMD_NAME}) ]]; then
-        echo "Error: ${COVERAGE_CMD_NAME} is not installed"
+    echo "Title: ${REPORT_TITLE}"
+    if [[ ! -x $(command -v gcovr) ]]; then
+        echo "Error: gcovr is not installed"
         exit 1
     fi
 
-    ${COVERAGE_CMD_NAME} \
+    echo  gcovr \
+        --html-title "'${REPORT_TITLE}'" \
+        --html \
+        --html-details \
+        ${COVERAGE_THRESHOLDS} \
+        --root ${INPUT_SRC_DIR} \
+        --output ${COVERAGE_REPORT} \
+        ${INPUT_COVERAGE_SEARCH_DIR} \
+        --print-summary \
+        -j ${PARALLEL} \
+        --exclude-unreachable-branches
+
+    gcovr \
         --html-title "${REPORT_TITLE}" \
         --html \
         --html-details \
@@ -65,8 +71,7 @@ function main() {
         ${INPUT_COVERAGE_SEARCH_DIR} \
         --print-summary \
         -j ${PARALLEL} \
-        --exclude-unreachable-branches \
-        --delete
+        --exclude-unreachable-branches
 
     if [[ -f ${COVERAGE_REPORT} ]]; then
         echo "Report is located at ${COVERAGE_REPORT}"

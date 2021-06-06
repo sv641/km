@@ -106,8 +106,11 @@ endif # ifneq (${LIB},)
 
 .PHONY: coverage
 ifneq (${COVERAGE},)
+# CFLAGS := $(subst -ffile-prefix-map=${CURDIR}/=,,${CFLAGS})
+
 coverage:
-	$(MAKE) BLDTYPE=$(COV_BLDTYPE) MAKEFLAGS="$(MAKEFLAGS)" COPTS="$(COPTS) --coverage"
+
+	$(MAKE) BLDTYPE=$(COV_BLDTYPE) MAKEFLAGS="$(MAKEFLAGS)" COPTS="-O0 --coverage"
 
 covclean:
 	$(MAKE) BLDTYPE=$(COV_BLDTYPE) MAKEFLAGS="$(MAKEFLAGS)" clean
