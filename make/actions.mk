@@ -28,7 +28,7 @@ include ${TOP}/make/locations.mk
 # customization of build should be in custom.mk
 include ${TOP}/make/custom.mk
 
-CFLAGS = ${COPTS} ${LOCAL_COPTS} -Wall -ggdb3 -pthread $(addprefix -I , ${INCLUDES}) -ffile-prefix-map=${CURDIR}/=
+CFLAGS = ${COPTS} ${LOCAL_COPTS} -Wall -ggdb3 -pthread $(addprefix -I , ${INCLUDES}) ${CPREFIX_MAP}
 DEPS = $(addprefix ${BLDDIR}/, $(addsuffix .d, $(basename ${SOURCES})))
 OBJS = $(sort $(addprefix ${BLDDIR}/, $(addsuffix .o, $(basename ${SOURCES}))))
 BLDEXEC = $(addprefix ${BLDDIR}/,${EXEC})
@@ -105,6 +105,15 @@ ${BLDSOLIB}: $(OBJS)
 endif # ifneq (${LIB},)
 
 .PHONY: coverage
+ifneq (${BLDTYPE},coverage)
+# --file-prefix-map removes full paths (build-dependent) from object files.
+# this is good for shipping code (no build machine path leaks) but make coverage (gcovr) super
+# fragile and break often. So let's strip the paths for non-coverage builds onlyu, since
+# we are unlikely to ship coverage builds.
+# ALso note that the full path os source file is passed to gcc to make Visual Studio properly parse
+# compile errors - so we need it - but that generates full paths in object files
+CPREFIX_MAP = -ffile-prefix-map=${CURDIR}/=
+endif
 ifneq (${COVERAGE},)
 # CFLAGS := $(subst -ffile-prefix-map=${CURDIR}/=,,${CFLAGS})
 
