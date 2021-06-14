@@ -330,11 +330,11 @@ jobs:
         # with:
         #   submodules: true
 
-      - name: Download release artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: release
-          path: build
+      # - name: Download release artifacts
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: release
+      #     path: build
 
       # - name: Install needed tools
       #   run: |
@@ -381,3 +381,32 @@ jobs:
           channel: '#build_and_test'
           name: 'CI workflow status: ${{ job.status }}'
           icon_emoji: ':poop:'
+
+  dump:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJSON(job) }}
+        run: echo "$JOB_CONTEXT"
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJSON(steps) }}
+        run: echo "$STEPS_CONTEXT"
+      - name: Dump runner context
+        env:
+          RUNNER_CONTEXT: ${{ toJSON(runner) }}
+        run: echo "$RUNNER_CONTEXT"
+      - name: Dump strategy context
+        env:
+          STRATEGY_CONTEXT: ${{ toJSON(strategy) }}
+        run: echo "$STRATEGY_CONTEXT"
+      - name: Dump matrix context
+        env:
+          MATRIX_CONTEXT: ${{ toJSON(matrix) }}
+        run: echo "$MATRIX_CONTEXT"
