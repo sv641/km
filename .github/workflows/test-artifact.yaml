@@ -43,6 +43,7 @@ env:
   SP_APPID: ${{ secrets.SP_APPID }}
   SP_PASSWORD: ${{ secrets.SP_PASSWORD }}
   SP_TENANT: ${{ secrets.SP_TENANT }}
+  NOTIFY_ON_SUCCESS: true # uncomment to push notification on success runs
   # TRACE: true # uncomment to enable '-x' in all bash scripts
 
 jobs:
@@ -363,12 +364,12 @@ jobs:
 
 
   slack-workflow-status:
-    name: Notify slack on failures
+    name: Notify slack
     runs-on: ubuntu-latest
-    # 'contains' shows how to add conditions, e.g. on workflow 'name:'
+    # 'contains' shows how to add conditions, e.g. on workflow 'name:', or many other contexts.
     # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
-    if: failure() &&
-      (github.ref == 'refs/heads/master' || contains(github.workflow, 'msterin'))
+    if: (failure() && github.ref == 'refs/heads/master') ||
+      contains(github.workflow, 'noisy')
     needs: [km-package-release, km-k8s-cluster]
     steps:
       - name: Notify slack channel
@@ -378,5 +379,5 @@ jobs:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           include_jobs: true
           channel: '#build_and_test'
-          name: 'CI workflow failure'
+          name: 'CI workflow status: ${{ job.status }}'
           icon_emoji: ':poop:'
