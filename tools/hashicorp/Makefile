@@ -41,10 +41,10 @@ LOG ?= 0
 PACKER_BUILD = PACKER_LOG=${LOG} time packer build -force
 
 product: ## Prepares KM packaging artifacts (e.g. km tarball and kkm run bundle)
-	@if ! type virtualbox >& /dev/null ; then echo -e "${RED}'virtualbox' is missing - please install it first ${NOCOLOR}"; false; fi
-	@if ! type vagrant >& /dev/null ; then echo -e "${RED}'vagrant' is missing - please install it first ${NOCOLOR}"; false; fi
-	$(MAKE) MAKEFLAGS=$(MAKEFLAGS) -C ${TOP} kkm-pkg
-	$(MAKE) MAKEFLAGS=$(MAKEFLAGS) -C ${TOP} release
+	# @if ! type virtualbox >& /dev/null ; then echo -e "${RED}'virtualbox' is missing - please install it first ${NOCOLOR}"; false; fi
+	# @if ! type vagrant >& /dev/null ; then echo -e "${RED}'vagrant' is missing - please install it first ${NOCOLOR}"; false; fi
+	# $(MAKE) MAKEFLAGS=$(MAKEFLAGS) -C ${TOP} kkm-pkg
+	# $(MAKE) MAKEFLAGS=$(MAKEFLAGS) -C ${TOP} release
 
 vm-images: product source-boxes ## loads source boxes and creates boxes with KM installed
 	@set -x ; for os in ${SRC_OS} ; \
@@ -66,8 +66,8 @@ register-boxes: ## register pre-created boxes in local vagrant cash
 
 # Note: Amazon import-image refuses to accept/import some kernel versions, so as a temporary
 # bandaid we build it from existing AMI. Ideally, we just want to import a box as an AMI - see test_ami_upload.pkr.hcl
-# for an examle how to do it
-ami:  ## Builds AMI with KKM in the AWS
+# for an example how to do it
+ami:  product ## Builds AMI with KKM in the AWS
 	${PACKER_BUILD} ubuntu-aws.pkr.hcl
 
 test-box-upload: ## Helper to test Vagrant Box upload from existing BOX file

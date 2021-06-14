@@ -19,6 +19,7 @@ apt-get update -y -q
 
 # Install KKM... it will also validate hardware.
 apt-get -y -q install linux-headers-$(uname -r) 2>&1
+chmod a+x $storage/kkm.run
 $storage/kkm.run 2>&1
 
 # Install Kontain.
