@@ -56,7 +56,8 @@ jobs:
 
       - name: Print build environment info
         run: |
-          echo "Event: ${{ github.event_name }} inputs.run_type: ${{ github.event.inputs.run_type }}"
+          echo "GITHUB Workflow '${{ github.workflow }}' actor '{{ github.actor }}'"
+          echo "Event '${{ github.event_name }}' inputs.run_type '${{ github.event.inputs.run_type }}'"
           echo ====Environment info===
           echo "SHA: $(git rev-parse HEAD)"
           echo "=== Last 10 commits:"
@@ -71,13 +72,13 @@ jobs:
           echo ==== CPU Info
           lscpu
 
-      - run: make -C cloud/azure login-cli
+      # - run: make -C cloud/azure login-cli
 
-      - name: Prepare KM build env
-        run: make -C tests pull-buildenv-image .buildenv-local-lib
+      # - name: Prepare KM build env
+      #   run: make -C tests pull-buildenv-image .buildenv-local-lib
 
-      - name: Build KM and tests using buildenv image
-        run: make -j withdocker
+      # - name: Build KM and tests using buildenv image
+      #   run: make -j withdocker
 
       # - name: Build KM for coverage
       #   run: make -C km -j withdocker TARGET=coverage
@@ -109,6 +110,7 @@ jobs:
       #   run: make -C tools/faktory all
 
       - name: Package KKM.ru and KM tarball for release
+        if: failure()
         run: |
           sudo apt install -q --yes makeself
           make kkm-pkg
@@ -234,21 +236,21 @@ jobs:
   #         make -C cloud/aws test SOURCE_BRANCH="${branch?failed to find out branch name}"
   #       timeout-minutes: 30
 
-  # km-k8s-cluster:
-  #   name: Create a new K8S cluster on Azure
-  #   runs-on: ubuntu-20.04
-  #   # The extra tests run if the workflow is triggered on schedule or manually.
-  #   # comment out (in your branch) if you want to force it on your run
-  #   if: ${{ github.event_name == 'schedule' ||
-  #     (github.event_name == 'workflow_dispatch' && github.event.inputs.run_type == 'nightly') }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         submodules: true
-  #     - run: make -C cloud/azure login-cli
+  km-k8s-cluster:
+    name: Create a new K8S cluster on Azure
+    runs-on: ubuntu-20.04
+    # The extra tests run if the workflow is triggered on schedule or manually.
+    # comment out (in your branch) if you want to force it on your run
+    if: ${{ github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_type == 'nightly') }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - run: make -C cloud/azure login-cli
 
-  #     - name: Create k8s Cluster
-  #       run: cloud/azure/aks_ci_create.sh ${{ env.NIGHTLY_CLUSTER_NAME }} ${{ secrets.SP_APPID }} ${{ secrets.SP_PASSWORD }}
+      - name: Create k8s Cluster
+        run: cloud/azure/aks_ci_create.sh ${{ env.NIGHTLY_CLUSTER_NAME }} ${{ secrets.SP_APPID }} ${{ secrets.SP_PASSWORD }}
 
   # km-test-all:
   #   name: Run all tests on a new K8s cluster
@@ -333,31 +335,48 @@ jobs:
           name: release
           path: build
 
-      - name: Install needed tools
-        run: |
-          # curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-          # sudo apt-add-repository --yes "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-          # sudo apt-get update --yes && sudo apt-get install --yes vagrant virtualbox makeself
-          sudo apt install --yes makeself
+      # - name: Install needed tools
+      #   run: |
+      #     # curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+      #     # sudo apt-add-repository --yes "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+      #     # sudo apt-get update --yes && sudo apt-get install --yes vagrant virtualbox makeself
+      #     sudo apt install --yes makeself
 
-      # AMI is being built with Packer so we are good
-      - name: Build  AMI
-        run:  make -C tools/hashicorp ami
+      # - name: Build  AMI
+      #   run:  make -C tools/hashicorp ami
 
       - name: test AMI - TBD
-        run: echo TBD
+        run: echo TBD - use packer AMI with null output
 
-      - name: Build  Vagrant Boxes - TBD
+      - name: Build  Vagrant Boxes - TBD needs nested virtualization
         run: |
           echo TBD.
           echo Run packer, grab an instance on Azure using Packer Azure ARM builder
-          echo install vagrant and virtual box, package box there
-          echo push to Vagrant cloud
+          echo install vagrant and virtual box, package vagrabt box there with make -C tools/hashicorp
+          echo push to Vagrant cloud make -C tools/hashicorp
 
       - name: Test Vagrant Boxes - TBD
         run: |
           echo TBD.
-          echo test1: run packer with AMI , run basic validation there
-          echo test2: run packer, grab an instance on Azure using Packer Azure AEM builder
+          echo run packer, grab an instance on Azure using Packer Azure AEM builder
           echo install vagrant and virtual box, do vagrant up and test
-          echo push
+
+
+  slack-workflow-status:
+    name: Notify slack on failures
+    runs-on: ubuntu-latest
+    # 'contains' shows how to add conditions, e.g. on workflow 'name:'
+    # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
+    if: failure() &&
+      (github.ref == 'refs/heads/master' || contains(github.workflow, 'msterin'))
+    needs: [km-package-release, km-k8s-cluster]
+    steps:
+      - name: Notify slack channel
+        uses: Gamesight/slack-workflow-status@master
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          include_jobs: true
+          channel: '#build_and_test'
+          name: 'CI workflow failure'
+          icon_emoji: ':poop:'
