@@ -65,8 +65,8 @@ case "${TARGET}" in
       # for runenv images we need KM installed first !
       # TODO: Pass it via Artifacts instead of building here on Ubuntu
       #       Specifically: download artifact action, then "file" provisioner to send it to the VM
-      sudo mkdir -p /opt/kontain/bin ; sudo chmod 777 /opt/kontain/bin
-      make -C km -j $(nproc)
+      # sudo mkdir -p /opt/kontain/bin ; sudo chmod 777 /opt/kontain/bin
+      # make -C km -j $(nproc)
       make -C $LOCATION pull-runenv-image
       make -C $LOCATION ${TARGET}
       ;;

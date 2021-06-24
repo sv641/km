@@ -109,7 +109,16 @@ build {
     # packer provisioners run as tmp 'packer' user.
     # For docker to run with no sudo, let's add it to 'docker' group and
     # later use 'sg' to run all as this group without re-login
-    inline = ["sudo usermod -aG docker $USER" ]
+    inline = [
+       "sudo usermod -aG docker $USER",
+       "sudo mkdir -p /opt/kontain/bin",
+       "sudo chmod a+w /opt/kontain/bin"
+    ]
+  }
+
+  provisioner "file" {
+    source = "/opt/kontain/bin/km"
+    destination = "/opt/kontain/bin/km"
   }
 
   provisioner "shell" {
@@ -130,7 +139,6 @@ build {
     ]
     timeout = var.timeout
   }
-
 
   post-processor "shell-local" {
     // assumes 'az login' on the box running packer
