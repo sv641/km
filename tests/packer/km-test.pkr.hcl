@@ -30,17 +30,21 @@ variable "timeout" {
    description = "Timeout for tests. Should be less that outer timeout, so packer cleans up resources"
 }
 
-// TODO - pass AMI id from outside
-variable "aws_ami_id" {
-   type = string
-   description="Pre-built AMI with all needes stuff installed"
-   default = "ami-00de22cbb5911d5c4" // TODO - use AMI data and find AMI by name
+data "amazon-ami" "build" {
+  filters = {
+    name                = "Kontain_ubuntu_20.04"
+    root-device-type    = "ebs"
+    virtualization-type = "hvm"
+  }
+  most_recent = true
+  owners      = ["782340374253"]
+  region      = var.aws_region
 }
 
 variables {
    aws_instance_type = "m5.xlarge"  // 4 CPU 16GB
-   aws_region = "us-east-2"
-   ssh_user = "fedora"
+   aws_region = "us-west-1"
+   ssh_user = "ubuntu"
    // Azure access (for docker images)
    sp_tenant = env("SP_TENANT")
    sp_appid = env("SP_APPID")
@@ -62,7 +66,7 @@ locals {
 source "amazon-ebs" "km-test" {
   skip_create_ami = true
   ami_name        = "does not matter"
-  source_ami      = var.aws_ami_id
+  source_ami      = data.amazon-ami.build.id
   instance_type   = var.aws_instance_type
   region          = var.aws_region
   ssh_username    = var.ssh_user

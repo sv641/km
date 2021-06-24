@@ -3,7 +3,6 @@
 # Install stuff on "all you can eat" base image (cloud Ubuntu VM) to run vagrant/packer/virtualbox and build/test KM .
 # Note that KM is not build here and instead recieved via testenv or release bundle, but KKM needs to build with correct header.
 #
-# expected to run as sudo
 
 cat  /etc/os-release
 # export DEBIAN_FRONTEND=noninteractive
@@ -35,7 +34,7 @@ sudo apt update --yes -qq
 sudo apt install --yes -qq git make makeself gcc linux-headers-$(uname -r) libelf-dev
 
 sudo apt install --yes -qq docker-ce docker-ce-cli containerd.io
- sudo systemctl enable docker.service
+sudo systemctl enable docker.service
 
 if ! grep -q docker /etc/group ; then sudo groupadd docker ; fi
 sudo usermod -aG docker $USER
