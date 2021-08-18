@@ -24,15 +24,9 @@
 
 import argparse
 import os
-import sys
 import logging
 import time
-
-try:
-   import github
-except:
-   print("Error: Missing PyGitHub module")
-   sys.exit(2)
+import github
 
 RELEASE_REPO_OWNER = "kontainapp"
 RELEASE_REPO_FULLNAME = "kontainapp/km"
@@ -95,10 +89,10 @@ def main():
     # assets to the release if needed.
     created_release = None
     try:
-      created_release = release_repo.create_git_release(
+        created_release = release_repo.create_git_release(
             version, f"Kontain {version}", args.message, draft=False, prerelease=True)
 
-      for asset in args.assets:
+        for asset in args.assets:
             uploaded_asset = created_release.upload_asset(asset)
             logger.info("Successfully uploaded %s url: %s",
                         uploaded_asset.name, uploaded_asset.url)
