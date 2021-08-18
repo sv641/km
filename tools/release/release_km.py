@@ -63,10 +63,12 @@ def main():
     if version.startswith("refs/tags/"):
         version = version[len("refs/tags/"):]
 
+    prerel = False
     if not version.startswith("v"):
         logger.warning("Triggered by a non-standard version. Using default test version %s",
                        RELEASE_DEFAULT_VERSION)
         version = RELEASE_DEFAULT_VERSION
+        prerel = True
 
     client = github.Github(token)
     release_repo = client.get_repo(RELEASE_REPO_FULLNAME)
@@ -90,7 +92,7 @@ def main():
     created_release = None
     try:
         created_release = release_repo.create_git_release(
-            version, f"Kontain {version}", args.message, draft=False, prerelease=True)
+            version, f"Kontain {version}", args.message, draft=False, prerelease=prerel)
 
         for asset in args.assets:
             uploaded_asset = created_release.upload_asset(asset)
