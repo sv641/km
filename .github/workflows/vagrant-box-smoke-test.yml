@@ -70,9 +70,9 @@ jobs:
     name: Vagrant box smoke test
     runs-on: macos-10.15
     steps:
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        
+      - name: Setup tmate session
+          uses: mxschmitt/action-tmate@v3
+
       - run: |
           vagrant init kontain/fedora32-kkm-beta3
           vagrant up
