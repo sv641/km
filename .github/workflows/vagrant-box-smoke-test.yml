@@ -68,7 +68,7 @@ env:
 jobs:
   box-test:
     name: Vagrant box smoke test
-    runs-on: macos-10.15
+    runs-on: ubuntu-latest
     steps:
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
