@@ -72,7 +72,7 @@ jobs:
     steps:
       - run: |
           vagrant init kontain/fedora32-kkm-beta3
-          vagrant up
+          vagrant up --debug
           vagrant ssh -c "/opt/kontain/bin/km /opt/kontain/tests/hello_test.km some_text" | grep "argv\[1] = 'some_text'"
           vagrant ssh -c "docker run --rm -it --runtime=krun kontainapp/runenv-python python -c 'import os; print(os.uname())'" | grep kontain.KKM
 
