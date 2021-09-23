@@ -93,11 +93,8 @@ jobs:
 
       - run: make -C cloud/azure login-cli
 
-      - name: Check docker
-        run: type docker
-
       - name: Check minikube
-        run: type minikube
+        run: minikube version
 
 #      - name: Prepare KM build env
 #        run: make -C tests pull-buildenv-image .buildenv-local-lib
