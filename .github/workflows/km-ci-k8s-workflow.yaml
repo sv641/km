@@ -93,57 +93,51 @@ jobs:
 
       - run: make -C cloud/azure login-cli
 
-      - name: Start minikube with CRIO
-        run: minikube start driver=docker container-runtime=cri-o
+      - name: Prepare KM build env
+        run: make -C tests pull-buildenv-image .buildenv-local-lib
 
-      - name: Delete minikube with CRIO
-        run: minikube delete
+      - name: Build KM and tests using buildenv image
+        run: make -j withdocker
 
-#      - name: Prepare KM build env
-#        run: make -C tests pull-buildenv-image .buildenv-local-lib
-#
-#      - name: Build KM and tests using buildenv image
-#        run: make -j withdocker
-#
-#      - name: Build KM for coverage
-#        run: make -C km -j withdocker TARGET=coverage
-#        if: env.TEST_COVERAGE == 'true'
-#
-#      - name: Build and push KM testenv image
-#        run: make -C tests testenv-image push-testenv-image
-#
-#        # Note: we need to have km built before kontaind.
-#      - name: Build and push kontaind image
-#        run: make -C cloud/k8s/kontaind push-runenv-image
-#
-#      - name: Build payloads and create test images
-#        run: make -C payloads pull-buildenv-image clean all testenv-image
-#
-#      - run: make -C payloads push-testenv-image
-#
-#      - name: Create payloads runenv and demo-runenv images
-#        # Note: this builds both runenv and demo-runenv images
-#        run: make -C payloads runenv-image
-#
-#      - run: make -C payloads push-demo-runenv-image
-#
-#      # Note: custom Python build needs to happen after python payload build
-#      - name: Python.km custom build
-#        run: |
-#          make -C payloads/python build-modules pack-modules MODULES="markupsafe wrapt"
-#          make -C payloads/python custom CUSTOM_MODULES="markupsafe wrapt"
-#
-#      - name: Build faktory
-#        run: make -C tools/faktory all
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: km
-#          path: |
-#            /opt/kontain/bin/km
-#            /opt/kontain/bin/krun
-#          retention-days: 7
-#
+      - name: Build KM for coverage
+        run: make -C km -j withdocker TARGET=coverage
+        if: env.TEST_COVERAGE == 'true'
+
+      - name: Build and push KM testenv image
+        run: make -C tests testenv-image push-testenv-image
+
+        # Note: we need to have km built before kontaind.
+      - name: Build and push kontaind image
+        run: make -C cloud/k8s/kontaind push-runenv-image
+
+      - name: Build payloads and create test images
+        run: make -C payloads pull-buildenv-image clean all testenv-image
+
+      - run: make -C payloads push-testenv-image
+
+      - name: Create payloads runenv and demo-runenv images
+        # Note: this builds both runenv and demo-runenv images
+        run: make -C payloads runenv-image
+
+      - run: make -C payloads push-demo-runenv-image
+
+      # Note: custom Python build needs to happen after python payload build
+      - name: Python.km custom build
+        run: |
+          make -C payloads/python build-modules pack-modules MODULES="markupsafe wrapt"
+          make -C payloads/python custom CUSTOM_MODULES="markupsafe wrapt"
+
+      - name: Build faktory
+        run: make -C tools/faktory all
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: km
+          path: |
+            /opt/kontain/bin/km
+            /opt/kontain/bin/krun
+          retention-days: 7
+
 #  km-test:
 #    name: KM, payloads, krun tests, KVM on K8S
 #    runs-on: ubuntu-20.04
@@ -403,3 +397,19 @@ jobs:
 #          channel: "#build_and_test"
 #          name: "CI workflow status"
 #          icon_emoji: ":thumbsdown:"
+
+  minikube-test:
+    name: Run k8s test on top of minikube
+    runs-on: ubuntu-20.04
+    needs: km-build
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Start minikube with CRIO
+        run: minikube start driver=docker container-runtime=cri-o
+
+      - name: Delete minikube with CRIO
+        run: minikube delete
+
