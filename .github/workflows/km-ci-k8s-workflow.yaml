@@ -410,6 +410,9 @@ jobs:
       - name: Start minikube with CRIO
         run: minikube start driver=docker container-runtime=cri-o
 
+      - name: Install Kontain DaemonSet
+        run: kubectl apply -f cloud/k8s/deploy/k8s-deploy.yaml
+
       - name: Delete minikube with CRIO
         run: minikube delete
 
