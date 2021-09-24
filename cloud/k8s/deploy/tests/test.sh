@@ -7,6 +7,8 @@ kubectl apply -f demo/k8s/test.yaml
 
 sleep 5
 
+kubectl describe deployments.apps -A
+
 kubectl get pod -A --show-labels
 
 # Wait for test pod to be ready.
