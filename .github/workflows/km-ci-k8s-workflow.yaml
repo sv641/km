@@ -417,7 +417,7 @@ jobs:
         run: kubectl apply -f demo/k8s/test.yaml
 
       - name: Run k8s deployment test
-        run: ./cloud/k8s/deploy/test/test.sh
+        run: ./cloud/k8s/deploy/tests/test.sh
 
       - name: Delete minikube with CRIO
         run: minikube delete
