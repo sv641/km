@@ -11,6 +11,8 @@ kubectl describe deployments.apps -A
 
 kubectl get pod -A --show-labels
 
+minikube logs
+
 # Wait for test pod to be ready.
 kubectl wait --for=condition=ready pod -l kontain=test-app
 
