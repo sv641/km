@@ -34,7 +34,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         securityContext:
-          privileged: false
+          privileged: true
         volumeMounts:
         - name: crio-conf
           mountPath: /etc/crio/
