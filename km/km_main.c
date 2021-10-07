@@ -143,6 +143,7 @@ km_machine_init_params_t km_machine_init_params = {
     .force_pdpe1g = KM_FLAG_FORCE_ENABLE,
     .overcommit_memory = KM_FLAG_FORCE_DISABLE,
     .vdev_name = NULL,   // redundant, but let's be paranoid
+    .netdev_name = NULL,
 };
 static int wait_for_signal = 0;
 int debug_dump_on_err = 0;   // if 1, will abort() instead of err()
@@ -176,7 +177,7 @@ struct option km_cmd_long_options[] = {
     {0, 0, 0, 0},
 };
 
-const_string_t km_cmd_short_options = "+g::e:AV::F:P:vC:Sk:";
+const_string_t km_cmd_short_options = "+g::e:i:AV::F:P:vC:Sk:";
 
 static const_string_t SHEBANG = "#!";
 static const size_t SHEBANG_LEN = 2;              // strlen(SHEBANG)
@@ -445,6 +446,9 @@ static char* km_parse_args(
                }
                envp[envc - 1] = NULL;
                break;
+            case 'i':
+               km_machine_init_params.netdev_name = strdup(optarg);
+               break;
             case 'C':
                km_set_coredump_path(optarg);
                break;
@@ -671,6 +675,8 @@ int main(int argc, char* argv[])
 
    km_mgt_init(mgtpipe);
 
+   km_net_init(km_machine_init_params.netdev_name);
+
    km_elf_t* elf = km_open_elf_file(payload_name);
 
    // snapshot file is type ET_CORE. We check for additional notes in restore
@@ -750,6 +756,7 @@ int main(int argc, char* argv[])
    } while (km_dofork(NULL) != 0);
 
    km_machine_fini();
+   km_net_fini();
    km_mgt_fini();
    regfree(&km_info_trace.tags);
    exit(machine.exit_status);

@@ -18,6 +18,8 @@
 #define __KM_HCALLS_H__
 
 #include <stdint.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 /*
  * Definitions of hypercalls guest code (payload) can make into the KontainVM.
@@ -64,6 +66,12 @@ typedef struct {
 extern const km_hcall_fn_t km_hcalls_table[];
 extern km_hc_stats_t* km_hcalls_stats;
 
+typedef enum {
+   NET_SEND_PACKET = 0,
+   NET_RECV_PACKET,
+   NET_SIOCGIFNAME = SIOCGIFNAME,
+} km_net_call_t;
+
 /*
  * Maximum hypercall number, defines the size of the km_hcalls_table
  */
@@ -77,7 +85,7 @@ enum km_internal_hypercalls {
    HC_reserved2 = KM_MAX_HCALL - 2,
    HC_guest_interrupt = KM_MAX_HCALL - 3,
    HC_reserved3 = KM_MAX_HCALL - 5,
-   HC_reserved4 = KM_MAX_HCALL - 4,
+   HC_net_call = KM_MAX_HCALL - 4,
    HC_unmapself = KM_MAX_HCALL - 6,
    HC_snapshot = KM_MAX_HCALL - 7,
    HC_snapshot_getdata = KM_MAX_HCALL - 8,

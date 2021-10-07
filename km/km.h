@@ -209,6 +209,7 @@ typedef struct km_machine_init_params {
                                         // Note: if too much of it is accessed, we expect Linux
                                         // OOM killer to kick in
    char* vdev_name;   // Device name. Virtualization type is defined by ioctl after this file is open
+   char* netdev_name; // network device name.
 } km_machine_init_params_t;
 extern km_machine_init_params_t km_machine_init_params;
 
@@ -718,6 +719,7 @@ static inline void km_signal_unlock(void)
 #define KM_TRACE_EXEC "exec"
 #define KM_TRACE_FORK "fork"   // also clone() for a process.
 #define KM_TRACE_ARGS "args"
+#define KM_TRACE_NET "net"
 
 /*
  * The km definition of the link_map structure in runtime/musl/include/link.h
@@ -755,5 +757,13 @@ void km_vmdriver_clone(km_vcpu_t* vcpu, km_vcpu_t* new_vcpu);
 void km_vmdriver_save_fork_info(km_vcpu_t* vcpu, uint8_t* ksi_valid, void* ksi);
 void km_vmdriver_restore_fork_info(km_vcpu_t* vcpu, uint8_t ksi_valid, void* ksi);
 int km_vmdriver_fp_format(km_vcpu_t* vcpu);
+
+// km_net.c
+void km_net_init(char *interface_name);
+void km_net_fini();
+uint64_t km_net_recv_packet(km_vcpu_t *vcpu, void *buf, size_t count);
+uint64_t km_net_send_packet(km_vcpu_t *vcpu, void *buf, size_t count);
+uint64_t km_net_ifname(km_vcpu_t *vcpu, void *buf, size_t count);
+
 
 #endif /* #ifndef __KM_H__ */

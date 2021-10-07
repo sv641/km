@@ -1077,6 +1077,30 @@ static km_hc_ret_t gettid_hcall(void* vcpu, int hc, km_hc_args_t* arg)
    return HC_CONTINUE;
 }
 
+static km_hc_ret_t guest_net_call(void* vcpu, int hc, km_hc_args_t* arg)
+{
+   km_net_call_t net_call = (km_net_call_t)arg->arg1;
+   /*if (net_call == NET_SEND_PACKET || net_call == NET_RECV_PACKET)*/ {
+      void* buf = km_gva_to_kma(arg->arg2);
+      if (buf == NULL) {
+         arg->hc_ret = -EFAULT;
+         return HC_CONTINUE;
+      }
+      switch (net_call) {
+         case NET_SEND_PACKET:
+            arg->hc_ret = km_net_send_packet(vcpu, buf, arg->arg3);
+            break;
+         case NET_RECV_PACKET:
+            arg->hc_ret = km_net_recv_packet(vcpu, buf, arg->arg3);
+            break;
+         case NET_SIOCGIFNAME:
+            arg->hc_ret = km_net_ifname(vcpu, buf, arg->arg3);
+            break;
+      }
+   }
+   return HC_CONTINUE;
+}
+
 static km_hc_ret_t guest_interrupt_hcall(void* vcpu, int hc, km_hc_args_t* arg)
 {
    km_handle_interrupt(vcpu);
@@ -2108,6 +2132,7 @@ const km_hcall_fn_t km_hcalls_table[KM_MAX_HCALL] = {
     [SYS_newfstatat] = newfstatat_hcall,
 
     [HC_guest_interrupt] = guest_interrupt_hcall,
+    [HC_net_call] = guest_net_call,
     [HC_unmapself] = unmapself_hcall,
     [HC_snapshot] = snapshot_hcall,
     [HC_snapshot_getdata] = snapshot_getdata_hcall,
