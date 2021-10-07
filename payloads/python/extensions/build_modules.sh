@@ -44,7 +44,7 @@ Usage:  ${BASH_SOURCE[0]} [options] [module_list]
                                     'generate' creates Kontain specific files
                                     Pack packages in (pushable) local docker image
     module_list   Build named modules (space separated list), no matter if validated or not.
-                  By default, we use validated modules from modules.json. I
+                  By default, we use validated modules from modules.json.
 EOF
    exit 1
 }
