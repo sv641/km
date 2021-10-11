@@ -403,22 +403,23 @@ jobs:
     runs-on: ubuntu-20.04
     needs: km-build
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
+#      - uses: actions/checkout@v2
+#        with:
+#          submodules: true
 #
-#      - name: Setup tmate session
-#        uses: mxschmitt/action-tmate@v3
-
-      - name: Start minikube with CRIO
-        run: minikube start driver=none container-runtime=cri-o
-
-      - name: Install Kontain DaemonSet
-        run: kubectl apply -f cloud/k8s/deploy/k8s-deploy.yaml
-
-      - name: Run k8s deployment test
-        run: ./demo/k8s/test.sh
-
-      - name: Delete minikube with CRIO
-        run: minikube delete
-
+#      - name: Start minikube with CRIO
+#        run: minikube start driver=none container-runtime=cri-o
+#
+#      - name: Install Kontain DaemonSet
+#        run: kubectl apply -f cloud/k8s/deploy/k8s-deploy.yaml
+#
+#      - name: Run k8s deployment test
+#        run: ./demo/k8s/test.sh
+#
+#      - name: Delete minikube with CRIO
+#        run: minikube delete
+#
