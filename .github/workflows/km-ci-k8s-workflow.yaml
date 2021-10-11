@@ -403,9 +403,9 @@ jobs:
     runs-on: ubuntu-20.04
     needs: km-build
     steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          submodules: true
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
 #
 #      - name: Setup tmate session
 #        uses: mxschmitt/action-tmate@v3
