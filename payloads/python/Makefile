@@ -72,7 +72,7 @@ export define link_cpython_km
 	for mod in $(foreach m,${CUSTOM_MODULES},cpython/Modules/$m/dlstatic_km.mk.json) ; do \
 		./extensions/linkline.py $${mod} $$(test -f ./${CUSTOM_TAKE} && echo -n --take ${CUSTOM_TAKE}) ; \
 	done
-	./link-km.sh ${PYTHONTOP} cpython "${EXTRA_LINKFILES}" "${CUSTOM_KM}"
+	./link-km.sh ${PYTHONTOP} cpython "$(foreach m,${CUSTOM_MODULES},@Modules/$m/linkline_km.txt)" "${CUSTOM_KM}"
 endef
 
 all:
@@ -82,7 +82,7 @@ ifneq ($(FROMSRC),yes)
 		${KM_OPT_VOLUME} \
 		-w ${TOP}/payloads/python \
 		${BUILDENV_IMG_TAGGED} \
-		make in-blank-container EXTRA_LINKFILES="${EXTRA_LINKFILES}" CUSTOM_KM="${CUSTOM_KM}"
+		make in-blank-container CUSTOM_MODULES="${CUSTOM_MODULES}" CUSTOM_KM="${CUSTOM_KM}"
 else
 	eval $(link_cpython_km)
 endif
@@ -115,7 +115,6 @@ CUSTOM_NAME ?= custom
 CUSTOM_CONFIG ?= ./extensions/python-$(CUSTOM_NAME).json
 CUSTOM_MODULES ?= $(shell jq -r .modules[].name ${CUSTOM_CONFIG} | sed -e 's-^null$$--')
 CUSTOM_TAKE ?= ./extensions/take_modules-$(CUSTOM_NAME).txt
-EXTRA_LINKFILES = $(foreach m,${CUSTOM_MODULES},@Modules/$m/linkline_km.txt)
 CUSTOM_KM = python-${CUSTOM_NAME}.km
 
 all: .check_custom_config pull-modules
