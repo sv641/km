@@ -437,10 +437,10 @@ jobs:
           echo "environment-kubeconfig:" ${KUBECONFIG}
 
 
-#
-#      - name: Setup tmate session
-#        uses: mxschmitt/action-tmate@v3
-#
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
 #      - name: Start minikube with CRIO
 #        run: minikube start driver=none container-runtime=cri-o
 #
