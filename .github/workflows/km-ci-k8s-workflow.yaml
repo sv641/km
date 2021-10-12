@@ -427,6 +427,8 @@ jobs:
 
       - name: Testing
         run: |
+          uname -a
+          sudo lsmod
           kubectl cluster-info
           kubectl version
           kubectl get pods -n kube-system
