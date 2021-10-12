@@ -403,13 +403,24 @@ jobs:
     runs-on: ubuntu-20.04
     needs: km-build
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - uses: engineerd/setup-kind@v0.5.0
 
-#      - uses: actions/checkout@v2
-#        with:
-#          submodules: true
+      - name: Testing
+        run: |
+          kubectl cluster-info
+          kubectl get pods -n kube-system
+          kubectl describe node
+          echo "current-context:" $(kubectl config current-context)
+          echo "environment-kubeconfig:" ${KUBECONFIG}
+
+
+#
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
 #
 #      - name: Start minikube with CRIO
 #        run: minikube start driver=none container-runtime=cri-o
