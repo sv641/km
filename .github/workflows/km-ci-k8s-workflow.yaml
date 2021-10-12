@@ -412,6 +412,7 @@ jobs:
       - name: Testing
         run: |
           kubectl cluster-info
+          kubectl version
           kubectl get pods -n kube-system
           kubectl describe node
           echo "current-context:" $(kubectl config current-context)
